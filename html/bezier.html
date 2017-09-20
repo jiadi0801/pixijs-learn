@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Hello World</title>
+</head>
+  <script src="../js/pixi.min.js"></script>
+<body>
+  <script type="text/javascript">
+    var type = "WebGL";
+    if(!PIXI.utils.isWebGLSupported()){
+        type = "canvas";
+    }
+
+    PIXI.utils.sayHello(type);
+
+    var renderWidth = 320*1.5,
+        renderHeight = 480*1.5;
+    
+    var renderer = PIXI.autoDetectRenderer(renderWidth, renderHeight, {antialias: false, transparent: false, resolution: 1});
+    document.body.appendChild(renderer.view);
+
+    var stage = new PIXI.Container();
+
+    var Sprite = PIXI.Sprite;
+    var resources = PIXI.loader.resources;
+    var Container = PIXI.Container;
+    var Graphics = PIXI.Graphics;
+    var Rope = PIXI.mesh.Rope;
+    var Point = PIXI.Point;
+    var Text = PIXI.Text;
+
+    PIXI.loader
+        .add('../images/trace.png')
+        .add('../images/speed.jpg')
+        .add('../images/chalk.png')
+        .load(setup);
+
+    var state;
+    function setup() {
+        var page = new Container();
+        var background = new Sprite(resources['../images/speed.jpg'].texture)
+        var pageWidth = background.width;
+        var pageHeight = background.height;
+        page.addChild(background)
+        stage.addChild(page);
+
+
+        // 定义轨迹
+        var traceTexture = resources['../images/trace.png'].texture
+        var brushWidth = traceTexture.height * 1.5;
+        var len = traceTexture.width;
+        var step = 1;
+        var cpX = 0, cpY = 0, cpX2 = 100, cpY2 = -200, toX = len, toY = -200
+
+        // 生成粉笔轨迹
+        var points = [];
+        for (var i = 0; i < len; i++) {
+            var p = bezierSample(i/len, cpX, cpY, cpX2, cpY2, toX, toY);
+            points.push(new Point(p.x, p.y));
+        }
+        var trace = new Rope(traceTexture, points)
+        page.addChild(trace)
+        trace.y = 850;
+
+        var line = new Graphics();
+        line.lineStyle(brushWidth, 0xFFFFFF, 1)
+        // line.bezierCurveTo(0,0,100,400,400,400)
+        line.y = 850;
+        line.moveTo(0,0);
+        line.lineTo(0,0);
+        var time = 0;
+        
+        page.addChild(line);
+        trace.mask = line;
+
+        // 竞速文字
+        var countingText = new Text('1、京东生鲜螃蟹单品', {
+                fontWeight: 'bold',
+                fontSize: 36,
+                fontFamily: 'Arvo',
+                fill: '#3e1707',
+                align: 'center',
+                stroke: '#fff00f',
+                strokeThickness: 7
+            });
+        page.addChild(countingText)
+        countingText.y = 832;
+        countingText.x = 80;
+
+        // 粉笔
+        var chalk = new Sprite(resources['../images/chalk.png'].texture)
+        page.addChild(chalk)
+        chalk.y = 845;
+        
+        page.scale.set(renderHeight/pageHeight)
+        page.x = (renderWidth - pageWidth * renderHeight / pageHeight) / 2;
+        
+        renderer.render(stage);
+        traceAnimate();
+
+        function traceAnimate() {
+            requestAnimationFrame(traceAnimate)
+            if (time < len) {
+                time += 5; // 这里可以又用bezier计算速率
+                var p = bezierSample(time/len, cpX, cpY, cpX2, cpY2, toX, toY);
+                line.lineStyle(brushWidth, 0xFFFFFF, 1)
+                line.lineTo(p.x, p.y);
+                chalk.x = p.x - 10;
+                chalk.y = 845 + p.y;
+                var p1 = bezierSample(time/len, cpX, cpY, -100, -400, toX, toY);
+                countingText.x = p1.x + 80;
+                countingText.y = p1.y + 832;
+
+            }
+            renderer.render(stage)
+        }
+    }
+
+    function bezierSample(t, cpX, cpY, cpX2, cpY2, toX, toY) {
+        var px = Math.pow(1 - t, 2) * cpX + 2 * t * (1 - t) * cpX2 + Math.pow(t, 2) * toX;
+        var py = Math.pow(1 - t, 2) * cpY + 2 * t * (1 - t) * cpY2 + Math.pow(t, 2) * toY;
+        return {x: px, y: py};
+    }
+
+</script>
+</body>
+</html>

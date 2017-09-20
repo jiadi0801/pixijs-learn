@@ -13,6 +13,51 @@
     }
 
     PIXI.utils.sayHello(type)
+
+    //Create the renderer
+    var renderer = PIXI.autoDetectRenderer(256, 256, {antialias: false, transparent: false, resolution: 1});
+
+    //Add the canvas to the HTML document
+    document.body.appendChild(renderer.view);
+
+    //Create a container object called the `stage`
+    var stage = new PIXI.Container();
+
+    //Tell the `renderer` to `render` the `stage`
+    renderer.render(stage);
+
+    // 改变颜色，重新渲染场景
+    renderer.backgroundColor = 0xff0039;
+    renderer.render(stage);
+
+    PIXI.loader
+        .add('../images/menu-icon_stock.png')
+        .add('../images/plasmaBlue.png')
+        .load(setup)
+
+    function setup() {
+        var sprite = new PIXI.Sprite(PIXI.loader.resources['../images/menu-icon_stock.png'].texture)
+        stage.addChild(sprite)
+        renderer.render(stage)
+
+        sprite.texture = PIXI.utils.TextureCache['../images/plasmaBlue.png']
+        sprite.x = 100
+        sprite.y = 20
+        sprite.width = 429
+        console.log(sprite.width)
+        console.log(sprite.height)
+        console.log(renderer.width)
+        console.log(renderer.height)
+        sprite.scale.set(0.5, 0.5);
+
+        var text = new PIXI.Text('hello text', {
+            fontSize: 32, fill: 'blue'
+        })
+        text.position.set(10, 100)
+        stage.addChild(text)
+
+        renderer.render(stage)
+    }
   </script>
 </body>
 </html>
