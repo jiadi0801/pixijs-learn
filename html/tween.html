@@ -51,7 +51,7 @@
         var brushWidth = traceTexture.height * 1.5;
         var len = traceTexture.width;
         var step = 1;
-        var cpX = 0, cpY = 0, cpX2 = 100, cpY2 = -400, toX = len, toY = -200
+        var cpX = 0, cpY = 0, cpX2 = 100, cpY2 = -200, toX = len, toY = -200
 
         // 生成粉笔轨迹
         var points = [];
@@ -76,19 +76,22 @@
         var chalk = new Sprite(resources['../images/chalk.png'].texture)
         page.addChild(chalk)
         chalk.y = 845;
+        chalk.rotation = -1;
 
-        new TWEEN.Tween({x: 0, y: 0})
+        new TWEEN.Tween({x: 0, y: 0, r: -Math.PI/2})
             .to({
                 x: getPointsCoor(points, 'x'),
-                y: getPointsCoor(points, 'y')
-            }, 2000)
+                y: getPointsCoor(points, 'y'),
+                r: 0
+            }, 5000)
             .interpolation(TWEEN.Interpolation.CatmullRom)
-            .easing( TWEEN.Easing.Quartic.Out )
+            .easing( TWEEN.Easing.Linear.None )
             .onUpdate(function (obj) {
                 line.lineStyle(brushWidth, 0xFFFFFF, 1)
                 line.lineTo(obj.x, obj.y);
                 chalk.x = obj.x - 10;
                 chalk.y = 845 + obj.y;
+                chalk.rotation = obj.r;
             })
             .start();
 
