@@ -1,0 +1,287 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Hello World</title>
+  <style>
+  #end_panel {
+  width: 600px;
+	height: 400px;
+  background-color: #000;
+}
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.1/TweenMax.min.js"></script>
+</head>
+<body>
+    <div id="end_panel">
+        <canvas id="end_cv"></canvas>
+        <aside style="display:none;">
+            <img class="end_texture" src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/106114/neon-star6.png?v=1" crossorigin="anonymous"/>
+            <img class="end_texture" src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/106114/neon-star7.png?v=1" crossorigin="anonymous"/>
+            <img class="end_texture" src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/106114/neon-star8.png?v=1" crossorigin="anonymous"/>
+            <img class="end_texture" src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/106114/neon-star9.png?v=1" crossorigin="anonymous"/>
+            <img class="end_texture" src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/106114/neon-star10.png?v=1" crossorigin="anonymous"/>
+        </aside>
+    </div>
+  <script type="text/javascript">
+   /* = FX
+-----------------------------------------------------------------------------*/
+    var end_panel = document.querySelector("#end_panel");
+    var end_textures = document.querySelectorAll(".end_texture");
+    var end_cv = document.getElementById("end_cv");
+
+    var end_ctx = end_cv.getContext("2d");
+    var end_cvWidth = parseInt(window.getComputedStyle(end_panel).width, 10); // get width without "px"
+    var end_cvHeight = parseInt(window.getComputedStyle(end_panel).height, 10); // get height without "px"
+    var resolution = window.devicePixelRatio || 1;
+    var sprites = [];
+    var toRad = Math.PI / 180;
+    var fx_tl;
+
+    // resize for retina
+    resizeCv();
+
+    function start_fx() {
+
+        // objects flying off screen
+        init_fx(
+            "img",				// texture
+            100, 				// total sprites
+            50, 50, 50, 50,  		// width-+, height-+
+            450, 550, 100, 200,  // start position x-+, y-+ 
+            200, 900, 180, 200,	// velocity-+, angle-+
+            .25, 1, .25, 1, 		// scale start-+, end-+
+            360, -10, 10,		// rotation start, end-+
+            2, 4,    			// duration-+
+            .1, 1, 				// fade in, out duration
+            200,  				// gravity
+            .4,					// delay+ inbetween sprites
+            -1,					// repeat sprite animation (-1 = infinite)
+            .4					// delay timeline
+        );
+
+        // particles
+        init_fx(
+            "circle",			// texture
+            100, 				// total sprites
+            50, 50, 50, 50,  		// width-+, height-+
+            0, 600, 0, 400,   	// start position x-+, y-+ 
+            25, 50, 0, 360,  		// velocity-+, angle-+
+            .1, .4, .4, .1, 		// scale start-+, end-+
+            360, 0, 0,   		// rotation start, end-+
+            7, 10,   			// duration-+
+            .1, 3,  			// fade in, out duration
+            0,  				// gravity
+            .1,					// delay+ inbetween sprites
+            -1,					// repeat sprite animation (-1 = infinite)
+            0					// delay timeline
+        );
+
+        // stripes
+        init_fx(
+            "stripe",			// texture
+            100, 				// total sprites
+            1, 3, 100, 300, 		// width-+, height-+
+            0, 600, 0, 400,   	// start position x-+, y-+ 
+            50, 300, -90, -270, 	// velocity-+, angle-+ (-90,-270=up/down, -0,-180=left/right)
+            1, 1, 1, 1,   		// scale start-+, end-+
+            0, 0, 0, 			// rotation start, end-+
+            7, 10,   			// duration-+
+            .5, 3,  			// fade in, out duration
+            0,  				// gravity
+            .2,					// delay+ inbetween sprites
+            -1,					// repeat sprite animation (-1 = infinite)
+            0					// delay timeline
+        );
+    }
+
+
+    function init_fx(textureSpr, totalSpr, minWidth, maxWidth, minHeight, maxHeight, xMin, xMax, yMin, yMax, veloMin, veloMax, angleMin, angleMax, startScaleMin, startScaleMax, endScaleMin, endScaleMax, rotStart, rotEndMin, rotEndMax, minDur, maxDur, fadeInDur, fadeOutDur, gravitySpr, delaySpr, repeatSpr, delayTl) {
+
+        // generate sprites
+        for (var i = 0; i < totalSpr; i++) {
+
+            // define size here so it's reusuable
+            var widthSpr = randomInt(minWidth, maxWidth);
+            var heightSpr = randomInt(minHeight, maxHeight);
+
+            // define texture
+            var texture;
+            if (textureSpr == "img") {
+                // use image in DOM
+                texture = end_textures[randomInt(end_textures.length - 1)];
+            } else {
+                // Create an offscreen canvas with a shape
+                texture = createShape(textureSpr);
+            }
+
+            sprites.push(createSprite());
+        }
+
+        // start rendering animation
+        TweenMax.ticker.addEventListener("tick", renderCv);
+
+
+        function createSprite() {
+
+            var width = (texture.naturalWidth || texture.width || 0) / resolution;
+            var height = (texture.naturalHeight || texture.height || 0) / resolution;
+            var duration = randomNr(minDur, maxDur);
+
+            // limit angle if needed
+            var angleNr;
+            if (angleMin == -90 && angleMax == -270) {
+                angleNr = Math.random() < 0.5 ? 90 : 270; // only up or down
+            } else if (angleMin == -0 && angleMax == -180) {
+                angleNr = Math.random() < 0.5 ? 0 : 180; // only left or right
+            } else {
+                angleNr = randomNr(angleMin, angleMax);
+            }
+
+            // create a new timeline for the sprite
+            fx_tl = new TimelineMax({
+                delay: randomNr(delaySpr),
+                repeat: repeatSpr,
+                repeatDelay: randomNr(1)
+            });
+
+            // 
+
+            // sprite object default properites
+            var sprite = {
+                animation: fx_tl,
+                texture: texture,
+                width: width,
+                height: height,
+                alpha: 0,
+                rotation: randomNr(rotStart),
+                scale: randomNr(startScaleMin, startScaleMax),
+                originX: 0.5,
+                originY: 0.5,
+                x: randomNr(xMin, xMax),
+                y: randomNr(yMin, yMax),
+            };
+
+            // animate to
+            fx_tl.add("start", delayTl)
+                .to(sprite, fadeInDur, { alpha: 1, ease: Power0.easeIn }, "start")
+                .to(sprite, duration, {
+                    rotation: 180 * randomNr(rotEndMin, rotEndMax),
+                    scale: randomNr(endScaleMin, endScaleMax),
+                    physics2D: {
+                        velocity: randomNr(veloMin, veloMax),
+                        angle: angleNr,
+                        gravity: gravitySpr,
+                    }
+                }, "start")
+
+                // fade out
+                .to(sprite, fadeOutDur, {
+                    alpha: 0,
+                    delay: duration - fadeOutDur
+                }, 0);
+
+            return sprite;
+        }
+
+        function createShape(textureSpr) {
+
+            // Create offscreen canvas
+            var canvas = document.createElement("canvas");
+            var context = canvas.getContext("2d");
+
+            canvas.width = widthSpr * resolution;
+            canvas.height = heightSpr * resolution;
+
+
+            // circle with gradient
+            if (textureSpr == "circle") {
+                var radius = widthSpr / 2;
+                var gradient = context.createRadialGradient(radius, radius, 0, radius, radius, radius);
+
+                gradient.addColorStop(0, "rgba(100,221,23,1)");
+                gradient.addColorStop(0.2, "rgba(100,221,23,0.25)");
+                gradient.addColorStop(1, "rgba(0,0,0,0)");
+
+                context.fillStyle = gradient;
+                context.fillRect(0, 0, widthSpr, heightSpr);
+            }
+
+            // stripe with gradient
+            else if (textureSpr == "stripe") {
+
+                // rectangle with vertical gradient (xStart, yStart, xEnd, yEnd)
+                var gradient2 = context.createLinearGradient(0, 0, 0, canvas.height);
+
+                var colors = ["rgba(73,214,241", "rgba(252,219,96", "rgba(218,49,0"];
+                var randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+                gradient2.addColorStop(0, '' + randomColor + ', 0)');
+                gradient2.addColorStop(.33, '' + randomColor + ', 1)');
+                gradient2.addColorStop(.66, '' + randomColor + ', 1)');
+                gradient2.addColorStop(1, '' + randomColor + ', 0)');
+
+                context.fillStyle = gradient2;
+                context.fillRect(0, 0, widthSpr, heightSpr);
+            }
+
+            return canvas;
+        }
+    }
+
+    function renderCv() {
+
+        end_ctx.clearRect(0, 0, end_cvWidth, end_cvHeight);
+
+        for (var i = 0; i < sprites.length; i++) {
+
+            var sprite = sprites[i];
+
+            // Skip rendering sprite if it has no alpha
+            if (!sprite.alpha) {
+                continue;
+            }
+
+            end_ctx.save();
+
+            var offsetX = sprite.originX * sprite.width;
+            var offsetY = sprite.originY * sprite.height;
+
+            end_ctx.translate(sprite.x + offsetX, sprite.y + offsetY);
+            end_ctx.rotate(sprite.rotation * toRad);
+            end_ctx.scale(sprite.scale, sprite.scale);
+
+            end_ctx.globalAlpha = sprite.alpha;
+            end_ctx.drawImage(sprite.texture, -offsetX, -offsetY);
+
+            end_ctx.restore();
+        }
+    }
+
+    function resizeCv() {
+        end_cv.width = end_cvWidth * resolution;
+        end_cv.height = end_cvHeight * resolution;
+
+        end_cv.style.width = end_cvWidth + "px";
+        end_cv.style.height = end_cvHeight + "px";
+
+        end_ctx.scale(resolution, resolution);
+    }
+
+    function randomNr(min, max) {
+        if (max === undefined) { max = min; min = 0; }
+        if (min > max) { var tmp = min; min = max; max = tmp; }
+        return min + (max - min) * Math.random();
+    }
+
+    function randomInt(min, max) {
+        if (max === undefined) { max = min; min = 0; }
+        if (min > max) { var tmp = min; min = max; max = tmp; }
+        return Math.floor(min + (max - min + 1) * Math.random());
+    }
+
+
+    start_fx();
+  </script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Hello World</title>
+</head>
+  <script src="../js/pixi.min.js"></script>
+  <script src="../js/tween.js"></script>
+<body>
+  <script type="text/javascript">
+    var type = "WebGL";
+    if(!PIXI.utils.isWebGLSupported()){
+        type = "canvas";
+    }
+
+    PIXI.utils.sayHello(type);
+
+    var renderWidth = 320*1.5,
+        renderHeight = 480*1.5;
+    
+    var renderer = PIXI.autoDetectRenderer(renderWidth, renderHeight, {antialias: false, transparent: false, resolution: 1});
+    document.body.appendChild(renderer.view);
+
+    var stage = new PIXI.Container();
+
+    var Sprite = PIXI.Sprite;
+    var resources = PIXI.loader.resources;
+    var Container = PIXI.Container;
+    var Graphics = PIXI.Graphics;
+    var Rope = PIXI.mesh.Rope;
+    var Point = PIXI.Point;
+    var Text = PIXI.Text;
+
+    PIXI.loader
+        .add('../images/trace.png')
+        .add('../images/speed.jpg')
+        .add('../images/chalk.png')
+        .load(setup);
+
+    var state;
+    function setup() {
+        var page = new Container();
+        var background = new Sprite(resources['../images/speed.jpg'].texture)
+        var pageWidth = background.width;
+        var pageHeight = background.height;
+        page.addChild(background)
+        stage.addChild(page);
+
+        // 定义轨迹
+        var traceTexture = resources['../images/trace.png'].texture
+        var brushWidth = traceTexture.height * 1.5;
+        var len = traceTexture.width;
+        var step = 1;
+        var cpX = 0, cpY = 0, cpX2 = 100, cpY2 = -400, toX = len, toY = -200
+
+        // 生成粉笔轨迹
+        var points = [];
+        for (var i = 0; i < len; i++) {
+            var p = bezierSample(i/len, cpX, cpY, cpX2, cpY2, toX, toY);
+            points.push(new Point(p.x, p.y));
+        }
+        var trace = new Rope(traceTexture, points)
+        page.addChild(trace)
+        trace.y = 850;
+
+        var line = new Graphics();
+        line.lineStyle(brushWidth, 0xFFFFFF, 1)
+        page.addChild(line);
+        trace.mask = line;
+
+        line.y = 850;
+        line.moveTo(0,0);
+        line.lineTo(0,0);
+
+        // 粉笔
+        var chalk = new Sprite(resources['../images/chalk.png'].texture)
+        page.addChild(chalk)
+        chalk.y = 845;
+
+        new TWEEN.Tween({x: 0, y: 0})
+            .to({
+                x: getPointsCoor(points, 'x'),
+                y: getPointsCoor(points, 'y')
+            }, 2000)
+            .interpolation(TWEEN.Interpolation.CatmullRom)
+            .easing( TWEEN.Easing.Quartic.Out )
+            .onUpdate(function (obj) {
+                line.lineStyle(brushWidth, 0xFFFFFF, 1)
+                line.lineTo(obj.x, obj.y);
+                chalk.x = obj.x - 10;
+                chalk.y = 845 + obj.y;
+            })
+            .start();
+
+        page.scale.set(renderHeight/pageHeight)
+        page.x = (renderWidth - pageWidth * renderHeight / pageHeight) / 2;
+        
+        renderer.render(stage);
+        traceAnimate();
+
+        function traceAnimate() {
+            TWEEN.update();
+            renderer.render(stage);
+            requestAnimationFrame(traceAnimate)
+        }
+    }
+
+    function bezierSample(t, cpX, cpY, cpX2, cpY2, toX, toY) {
+        var px = Math.pow(1 - t, 2) * cpX + 2 * t * (1 - t) * cpX2 + Math.pow(t, 2) * toX;
+        var py = Math.pow(1 - t, 2) * cpY + 2 * t * (1 - t) * cpY2 + Math.pow(t, 2) * toY;
+        return {x: px, y: py};
+    }
+
+    function getPointsCoor(points, type) {
+        return points.map(function (p) {
+            return p[type];
+        });
+    }
+
+</script>
+</body>
+</html>
