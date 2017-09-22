@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Hello World</title>
+  <title>粒子示例</title>
   <style>
   #end_panel {
   width: 600px;
@@ -25,6 +25,13 @@
     </div>
   <script type="text/javascript">
    /* = FX
+1、设定初始参数
+2、创建材质
+3、创建精灵，并给精灵加上无限循环animation（这里如果没有库支持，很繁杂）
+4、开始定时执行渲染函数
+5、在渲染函数中判断现有粒子的过期条件（比如alpha=0了，比如position超出画布了）
+6、如果没过期，不做操作，如果过期，重设精灵的属性
+这里最关键的就是第三点，他决定了粒子的运动轨迹，过渡动画等
 -----------------------------------------------------------------------------*/
     var end_panel = document.querySelector("#end_panel");
     var end_textures = document.querySelectorAll(".end_texture");

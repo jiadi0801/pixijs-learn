@@ -1,0 +1,301 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>粉笔灰粒子效果</title>
+</head>
+  <script src="../js/pixi.min.js"></script>
+  <script src="../js/tween.js"></script>
+<body>
+  <script type="text/javascript">
+    var type = "WebGL";
+    if(!PIXI.utils.isWebGLSupported()){
+        type = "canvas";
+    }
+
+    PIXI.utils.sayHello(type);
+
+    var renderWidth = 320*1.5,
+        renderHeight = 480*1.5;
+    
+    var renderer = PIXI.autoDetectRenderer(renderWidth, renderHeight, {antialias: false, transparent: false, resolution: 1});
+    document.body.appendChild(renderer.view);
+
+    var stage = new PIXI.Container();
+
+    var Sprite = PIXI.Sprite;
+    var resources = PIXI.loader.resources;
+    var Container = PIXI.Container;
+    var Graphics = PIXI.Graphics;
+    var Rope = PIXI.mesh.Rope;
+    var Point = PIXI.Point;
+    var Text = PIXI.Text;
+
+    PIXI.loader
+        .add('../images/trace.png')
+        .add('../images/speed.jpg')
+        .add('../images/chalk.png')
+        .add('../images/neon-star6.png')
+        .add('../images/neon-star7.png')
+        .add('../images/neon-star8.png')
+        .add('../images/neon-star9.png')
+        .add('../images/neon-star10.png')
+        .load(setup);
+
+    var state;
+    function setup() {
+        var star = {
+            star6: resources['../images/neon-star6.png'].texture,
+            star7: resources['../images/neon-star7.png'].texture,
+            star8: resources['../images/neon-star8.png'].texture,
+            star9: resources['../images/neon-star9.png'].texture,
+            star10: resources['../images/neon-star10.png'].texture
+        }
+
+        var page = new Container();
+        var background = new Sprite(resources['../images/speed.jpg'].texture)
+        var pageWidth = background.width;
+        var pageHeight = background.height;
+        page.addChild(background)
+        stage.addChild(page);
+
+        // 定义轨迹
+        var traceTexture = resources['../images/trace.png'].texture
+        var brushWidth = traceTexture.height * 1.5;
+        var len = traceTexture.width;
+        var step = 1;
+        var cpX = 0, cpY = 0, cpX2 = 100, cpY2 = -200, toX = len, toY = -200
+
+        // 生成粉笔轨迹
+        var points = [];
+        for (var i = 0; i < len; i++) {
+            var p = bezierSample(i/len, cpX, cpY, cpX2, cpY2, toX, toY);
+            points.push(new Point(p.x, p.y));
+        }
+        var trace = new Rope(traceTexture, points)
+        page.addChild(trace)
+        trace.y = 850;
+
+        var line = new Graphics();
+        line.lineStyle(brushWidth, 0xFFFFFF, 1)
+        page.addChild(line);
+        trace.mask = line;
+
+        line.y = 850;
+        line.moveTo(0,0);
+        line.lineTo(0,0);
+
+        // 粉笔灰
+        var sprites = [];
+        var spritesContainer = new Container();
+        spritesContainer.x = 0;
+        spritesContainer.y = 845;
+        page.addChild(spritesContainer);
+        var posx = getPointsCoor(points, 'x')
+        posx = posx[posx.length - 1] - 10;
+        var posy = getPointsCoor(points, 'y')
+        posy = posy[posy.length - 1] + 845;
+        init_fx(
+            "img",				// texture
+            50, 				// total sprites
+            50, 50, 50, 50,  		// width-+, height-+
+            0, 0, 0, 0,  // start position x-+, y-+ 
+            400, 600, 95, 125,	// velocity-+, angle-+
+            .25, 1, .25, 1, 		// scale start-+, end-+
+            360, -10, 10,		// rotation start, end-+
+            1, 2,    			// duration-+
+            .1, .5, 				// fade in, out duration
+            1800,  				// gravity
+            .4,					// delay+ inbetween sprites
+            -1,					// repeat sprite animation (-1 = infinite)
+            0.01,					// delay timeline
+            4,                  // distance
+        );
+
+        // 粉笔
+        var chalk = new Sprite(resources['../images/chalk.png'].texture)
+        page.addChild(chalk)
+        chalk.y = 845;
+        chalk.rotation = -1;
+
+        new TWEEN.Tween({x: 0, y: 0, r: -Math.PI/2})
+            .to({
+                x: getPointsCoor(points, 'x'),
+                y: getPointsCoor(points, 'y'),
+                r: 0
+            }, 1500)
+            .interpolation(TWEEN.Interpolation.CatmullRom)
+            .easing( TWEEN.Easing.Linear.None )
+            .onUpdate(function (obj) {
+                line.lineStyle(brushWidth, 0xFFFFFF, 1)
+                line.lineTo(obj.x, obj.y);
+                chalk.x = obj.x - 10;
+                chalk.y = 845 + obj.y;
+                chalk.rotation = obj.r;
+                spritesContainer.x = obj.x - 10;
+                spritesContainer.y = obj.y + 845;
+            })
+            .start();
+
+        page.scale.set(renderHeight/pageHeight)
+        page.x = (renderWidth - pageWidth * renderHeight / pageHeight) / 2;
+        
+        renderer.render(stage);
+        traceAnimate();
+
+        function traceAnimate() {
+            for (var i = 0; i < sprites.length; i++) {
+                var sprite = sprites[i];
+                var star = sprite.sprite;
+                if (sprite.ing) {
+                    continue;
+                }
+                sprite.reset()
+                sprite.timeline.start();
+            }
+            TWEEN.update();
+            renderer.render(stage);
+            requestAnimationFrame(traceAnimate)
+        }
+
+
+        function init_fx(textureSpr, // texture
+            totalSpr,  // total sprites
+            minWidth, maxWidth, minHeight, maxHeight, // width-+, height-+
+            xMin, xMax, yMin, yMax, // start position x-+, y-+ 
+            veloMin, veloMax, angleMin, angleMax, // velocity-+, angle-+ (-90,-270=up/down, -0,-180=left/right)
+            startScaleMin, startScaleMax, endScaleMin, endScaleMax, // scale start-+, end-+
+            rotStart, rotEndMin, rotEndMax, // rotation start, end-+
+            minDur, maxDur,         // duration-+
+            fadeInDur, fadeOutDur,  // fade in, out duration
+            gravitySpr, // gravity
+            delaySpr,   // delay+ inbetween sprites
+            repeatSpr,  // repeat sprite animation (-1 = infinite)
+            delayTl,    // delay timeline
+            distance    // 轨迹距离，越大距离越小
+        ) {
+            for (var i = 0; i < totalSpr; i++) {
+                sprites.push(createStarSprite());
+            }
+
+            function createStarSprite() {
+                var sprite = {
+                    ing: true
+                };
+                var starSpr = sprite.sprite = new Sprite(star['star' + randomInt(6, 10)]);
+
+                // 初始star精灵属性
+                starSpr.x = randomNr(xMin, xMax);
+                starSpr.y = randomNr(yMin, yMax);
+                sprite.originX = starSpr.x;
+                sprite.originY = starSpr.y;
+                starSpr.scale.set(randomNr(startScaleMin, startScaleMax));
+                starSpr.rotation = randomNr(rotStart);
+                starSpr.alpha = 0; 
+
+                // TODO 构造自己的timeline；
+                // 设置精灵动画
+                var fadeIn = new TWEEN.Tween(starSpr)
+                    .to({alpha: 1}, fadeInDur * 1000)
+                    .easing(TWEEN.Easing.Quadratic.In)
+
+                var velocity = randomNr(veloMin, veloMax);
+                var angleNr;
+                if (angleMin == -90 && angleMax == -270) {
+                    angleNr = Math.random() < 0.5 ? 90 : 270; // only up or down
+                } else if (angleMin == -0 && angleMax == -180) {
+                    angleNr = Math.random() < 0.5 ? 0 : 180; // only left or right
+                } else {
+                    angleNr = randomNr(angleMin, angleMax);
+                }
+                sprite.computeXYFn = DefineParabolicMovement(velocity, angleNr, gravitySpr, starSpr.x, starSpr.y);
+                sprite.t = 0;
+                sprite.rotation = 0;
+                var duration = randomNr(minDur, maxDur);  
+                starSpr.pivot.set(starSpr.width/2,starSpr.height/2)              
+                var move = new TWEEN.Tween(sprite)
+                    .to({t: 1/distance, rotation: -randomNr(2, 3) * Math.PI}, duration * 1000)
+                    .onUpdate(function (obj) {
+                        var t = obj.t;
+                        var xy = sprite.computeXYFn(t);
+                        starSpr.x = xy.x;
+                        starSpr.y = xy.y;
+                        starSpr.rotation = obj.rotation;
+                    });
+
+                var fadeOut = new TWEEN.Tween(starSpr)
+                    .to({alpha: 0}, fadeOutDur * 1000)
+                    .easing(TWEEN.Easing.Quadratic.Out)
+                    .delay(duration * 1000 - fadeOutDur * 1000 + fadeInDur * 1000);
+
+                fadeIn.chain(fadeOut)
+                fadeOut.chain(new TWEEN.Tween().onComplete(function () {
+                    sprite.ing = false;
+                }));
+
+                var timeline = new TWEEN.Tween('start').to('start', delayTl * 1000);
+                timeline.chain(fadeIn, move);
+
+                sprite.timeline = timeline;
+
+                sprite.reset = function () {
+                    sprite.t = 0;
+                    sprite.rotation = 0;
+                    sprite.sprite.alpha = 0;
+                    sprite.sprite.x = sprite.originX + spritesContainer.x;
+                    sprite.sprite.y = sprite.originY + spritesContainer.y;
+                    sprite.computeXYFn = DefineParabolicMovement(velocity, angleNr, gravitySpr, sprite.sprite.x, sprite.sprite.y);
+                    sprite.ing = true;
+                }
+
+                setTimeout(function () {
+                    page.addChild(sprite.sprite)
+                    sprite.reset();
+                    sprite.timeline.start();
+                }, 50 * randomInt(totalSpr))
+
+                return sprite;
+            }
+        }
+    }
+    
+    function randomNr(min, max) {
+        if (max === undefined) { max = min; min = 0; }
+        if (min > max) { var tmp = min; min = max; max = tmp; }
+        return min + (max - min) * Math.random();
+    }
+
+    function randomInt(min, max) {
+        if (max === undefined) { max = min; min = 0; }
+        if (min > max) { var tmp = min; min = max; max = tmp; }
+        return Math.floor(min + (max - min + 1) * Math.random());
+    }
+
+    function bezierSample(t, cpX, cpY, cpX2, cpY2, toX, toY) {
+        var px = Math.pow(1 - t, 2) * cpX + 2 * t * (1 - t) * cpX2 + Math.pow(t, 2) * toX;
+        var py = Math.pow(1 - t, 2) * cpY + 2 * t * (1 - t) * cpY2 + Math.pow(t, 2) * toY;
+        return {x: px, y: py};
+    }
+
+    function getPointsCoor(points, type) {
+        return points.map(function (p) {
+            return p[type];
+        });
+    }
+
+    function DefineParabolicMovement(velocity, angle, gravity, originX, originY) {
+        // 暂时使用笛卡尔坐标系
+        var theta = 2 * Math.PI * (angle / 360);
+        return function (t) {
+            var x = velocity * Math.cos(theta) * t + originX
+            var y = velocity * Math.sin(theta) * t + 0.5 * gravity * t * t + originY;
+            return {
+                x: x,
+                y: y
+            }
+        }
+    }
+
+</script>
+</body>
+</html>
