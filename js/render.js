@@ -24,34 +24,61 @@ define(function (require, exports, module) {
 
         
     var speedConfig = comp.attributes,
+        trackNum = speedConfig.meta.num;
         trackerWidth = speedConfig.trackBar.bboxWidth,
-        trackerHeight = speedConfig.trackBar.bboxHeight;
+        trackerHeight = speedConfig.trackBar.bboxHeight,
+        delta = speedConfig.meta.delta,   // 每个条目的错位距离
+        interval = speedConfig.meta.interval,  // 每个条目的间隔距离
+        motionPathArr = speedConfig.trackBar.motionPath, // 轨迹的实际路径
+        maskWidth = speedConfig.trackBar.trackWidth,  // 轨迹蒙层的宽度
+        trackDelay = speedConfig.meta.deltaTime   // 轨迹蒙层的延迟时间
+    
+    var maskSpr;  // 蒙层
 
     PIXI.loader
         .add('../images/paint.png')
         .load(function () {
         
         var i = 1;
-        // trackBar
-        var delta = speedConfig.meta.delta,   // 每个条目的错位距离
-            interval = speedConfig.meta.interval,  // 每个条目的间隔距离
-            motionPathArr = speedConfig.trackBar.motionPath, // 轨迹的实际路径
-            maskWidth = speedConfig.trackBar.trackWidth  // 轨迹蒙层的宽度
+        for (var i = 0; i < trackNum; i++) {
+            oneTrack(i, trackNum);
+        }
 
-        var trackBarSpr = new Sprite(resources['../images/paint.png'].texture)
-        stage.addChild(trackBarSpr);
-        trackBarSpr.width = trackerWidth;
-        trackBarSpr.height = trackerHeight;
-        trackBarSpr.x = i * speedConfig.meta.delta;
-        trackBarSpr.y = i * speedConfig.meta.interval;
-        
-        var maskSpr = new Sprite(Texture.fromCanvas(createMaskCanvas(trackBarSpr, maskWidth, motionPathArr)))
-        maskSpr.x = trackBarSpr.x;
-        maskSpr.y = trackBarSpr.y;
-        console.log(maskSpr.width, maskSpr.height)
-        stage.addChild(maskSpr)
+        function oneTrack(i, len) {
+            // trackBar
+            var trackBarSpr = new Sprite(resources['../images/paint.png'].texture)
+            stage.addChild(trackBarSpr);
+            trackBarSpr.width = trackerWidth;
+            trackBarSpr.height = trackerHeight;
+            if (delta > 0) {
+                trackBarSpr.x = (i + 1 - len) * delta;
+            } else {
+                trackBarSpr.x = i * delta;
+            }
+            trackBarSpr.y = i * interval;
+            // mask
+            var maskCanvas = createMaskCanvas(trackBarSpr, maskWidth, motionPathArr);
+            maskSpr = new Sprite(Texture.fromCanvas(maskCanvas));
+            trackBarSpr.mask = maskSpr;
+            maskSpr.maskCanvas = maskCanvas;
+            maskSpr.x = trackBarSpr.x;
+            maskSpr.y = trackBarSpr.y;
+            maskSpr.startPointer = 0;  // 蒙层非透明部分
+            maskSpr.endPointer = 0;
+            updateMask(maskSpr);  // 初始更新蒙层
+            new TWEEN.Tween(maskSpr)
+            .to({
+                startPointer: 1
+            }, 1950)
+            .delay(i * trackDelay)
+            .easing( TWEEN.Easing.Cubic.Out )
+            .onUpdate(function (obj) {
+                updateMask(obj);
+            })
+            .start();
 
-        
+            stage.addChild(maskSpr);
+        }
     })
     
     
@@ -64,7 +91,6 @@ define(function (require, exports, module) {
         canvas.width = targetSpr.width;
         canvas.height = targetSpr.height;
         var ctx = canvas.getContext('2d');
-        // var gradient = ctx.createLinearGradient(600, 0, 0, 600);
         ctx.strokeStyle = '#ff0000';
         ctx.beginPath();
         ctx.lineWidth = maskWidth;
@@ -77,15 +103,26 @@ define(function (require, exports, module) {
         return canvas;
     }
 
+    function updateMask(maskSpr) {
+        var canvas = maskSpr.maskCanvas,
+            ctx = canvas.getContext('2d');
+            start = maskSpr.startPointer,
+            end = maskSpr.endPointer;
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        var gradient = ctx.createLinearGradient(0, maskSpr.height, maskSpr.width, 0);
+            gradient.addColorStop(end, 'rgba(255,255,255,0)');
+            gradient.addColorStop(end, 'rgba(255,255,255,1)');
+            gradient.addColorStop(start, 'rgba(255,255,255,1)');
+            gradient.addColorStop(start, 'rgba(255,255,255,0)');
+        ctx.strokeStyle = gradient;
+        ctx.stroke();
+        maskSpr.texture.update();
+    }
 
-    function render() {
+    // 立即执行渲染
+    (function animate() {
+        TWEEN.update();
         renderer.render(stage);
-    }
-
-    function animate() {
-        render();
         requestAnimationFrame(animate);
-    }
-    animate();
-
+    })();
 });

@@ -15,14 +15,15 @@ define(function (require, exports, module) {
         },
         attributes: {
             meta: {
-                num: 10, // 轨迹条个数
-                interval: 50, // 轨迹间隔
-                delta: -10,  // 轨迹错位像素
+                num: 5, // 轨迹条个数
+                interval: 80, // 轨迹间隔
+                delta: 10,  // 轨迹错位像素
+                deltaTime: 300  // 轨迹动画错位时间
             },
             trackBar: {
                 fillType: 'img', // img | 另外独立组件gradient
                 fill: ['uba/jfs/t10015/212/204464929/7319/16192d5c/59c8c2cbN1af8c016.png'], 
-                motionPath: [['moveTo', [0, 28]], ['lineTo', [70, 14]], ['lineTo', [147, 7]]],  // 运动轨迹
+                motionPath: [['moveTo', [0, 28]], ['lineTo', [70, 14]], ['bezierCurveTo', [90, 15, 120, 13, 147, 7]]],  // 轨迹骨架曲线
                 bboxWidth: 577 * (320 / 1250),   // 图片缩放像素
                 bboxHeight: 134 * (320 / 1250),
                 trackWidth: 70 * (320 / 1250) // 实际轨迹条最大处宽度，非bbox宽度
