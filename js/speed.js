@@ -83,7 +83,6 @@ define(function (require, exports, module) {
             trackObj.rankSpr = rankSpr;
             // rankSpr.width = speedConfig.rank.width;
             // rankSpr.height = speedConfig.rank.height;
-            console.log(trackBarSpr.x, trackBarSpr.y)
             rankSpr.x = trackBarSpr.x + speedConfig.rank.offset[0];
             rankSpr.y = trackBarSpr.y + speedConfig.rank.offset[1];
             rankSpr.originX = rankSpr.x;
