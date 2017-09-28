@@ -16,22 +16,25 @@ define(function (require, exports, module) {
         attributes: {
             meta: {
                 num: 5, // 轨迹条个数
-                interval: 80, // 轨迹间隔
-                delta: 10,  // 轨迹错位像素
-                deltaTime: 300  // 轨迹动画错位时间
+                interval: 50, // 轨迹间隔
+                delta: 0,  // 轨迹错位像素
+                deltaTime: 100,  // 轨迹动画错位时间
+                paddingTop: 50,    // 内容区的边距
+                tmpdata: ['长虹', '康佳', '海信', '蓝鲸', '小米']
             },
             trackBar: {
                 fillType: 'img', // img | 另外独立组件gradient
                 fill: ['uba/jfs/t10015/212/204464929/7319/16192d5c/59c8c2cbN1af8c016.png'], 
-                motionPath: [['moveTo', [0, 28]], ['lineTo', [70, 14]], ['bezierCurveTo', [90, 15, 120, 13, 147, 7]]],  // 轨迹骨架曲线
-                bboxWidth: 577 * (320 / 1250),   // 图片缩放像素
+                // motionPath: [[0, 360], [15.224,283.464], [58.578,218.578], [123.464,175.224],[200,160],[320,160]],  
+                motionPath: [[0, 34.3],[70, 14],[110, 13],[147, 0]],  // 轨迹骨架点
+                bboxWidth: 577 * (320 / 1250),   // 轨迹图片缩放像素
                 bboxHeight: 134 * (320 / 1250),
-                trackWidth: 70 * (320 / 1250) // 实际轨迹条最大处宽度，非bbox宽度
+                trackWidth: 100 * (320 / 1250) // 实际轨迹条最大处宽度，非bbox宽度
             },
             trackHead: {
                 fillType: 'img',
-                width: 100,
-                height: 100,
+                width: 30,
+                height: 30,
                 offset: [], // 相对trackBar顶部偏移
                 motionPath: 'bar',
                 // motionPath: [],  自定义运动轨迹， 另外独立组件
@@ -53,7 +56,7 @@ define(function (require, exports, module) {
             rank: {
                 width: 50,
                 height: 50,
-                offset: [],
+                offset: [5, -7],
                 imgList: [], // 1-i名的排名图片
                 animation: '',  // 内置几种，配置再加要爆炸
             },

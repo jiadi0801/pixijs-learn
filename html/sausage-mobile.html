@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: #555557;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        canvas {
+            border: 1px solid #000;
+            float: left;
+            clear: both;
+            background-size: cover;
+        }
+
+        #download {
+            clear: both;
+            float: left;
+            cursor: pointer;
+            color: #ccc;
+            padding: 3px;
+        }
+
+        #download:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="500" height="300" id="canvas">Sorry, no canvas available</canvas>
+    <a id="download" download="AbdiasCanvasDemo.png">Download as image</a>
+
+    <input type="button" value="New landscape" id="new" />
+    <script>
+        var canvas = document.getElementById('canvas'),
+            ctx = canvas.getContext('2d'),
+            tim,
+            bgx = 0,
+            isPlaying;
+
+        if (window.innerWidth > 320) {
+            canvas.width = 320;
+            canvas.height = 360;
+        }
+        /**
+        * Functions for demo
+        */
+        function doCanvas() {
+
+            cancelAnimationFrame(tim);
+
+            // ctx.clearRect(0, 0, canvas.width, canvas.height * 0.8);
+
+            var numOfSegments = 5,
+                dlt = 40,  //no odd-number
+                w = canvas.width + dlt,
+                segment = w / numOfSegments,
+                i,
+                points = [],
+                cPoints,
+                variations = 0.21,
+
+                x1, x2, y1, y2, dx = 0,
+                sz = 7,
+                bu,
+                me = this;
+
+            console.log(w, numOfSegments, segment)
+            points = [];
+
+            //produce some random heights across the canvas
+            for (i = 0; i < numOfSegments + 1; i++) {
+                points.push(segment * i);
+                points.push(canvas.height / 1.8 + canvas.height * variations * Math.random());
+            }
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            cPoints = ctx.curve(points); //modfied curve overrides tension
+            ctx.strokeStyle = '#ff0';
+            ctx.stroke();
+            cPoints = quantX(cPoints);
+
+            ctx.fillStyle = 'black';
+            ctx.lineWidth = 7;
+            ctx.strokeStyle = '#ff0';
+            ctx.lineCap = 'round';
+
+            this.trace = function () {
+                if (dx > 0) ctx.putImageData(bu, Math.max(0, x1 - sz), Math.min(y1, y2) - sz);
+
+                ctx.beginPath();
+                x1 = cPoints[dx] - sz / 2;
+                y1 = cPoints[dx + 1] - sz;
+
+                x2 = cPoints[dx + dlt] - sz / 2;
+                y2 = cPoints[dx + dlt + 1] - sz;
+
+                var dg = getLineAngle(x1, y1, x2, y2);
+                var l = ((((lineToAngle(x1, y2, dlt, dg).x - x1) / 2) | 0) * 2);
+
+                var cr = lineToAngle(x1, y1, sz / 2 + 2, dg - 90).x - x1;
+
+                x2 = cPoints[dx + l] - sz / 2;
+                y2 = cPoints[dx + l + 1] - sz;
+
+                bu = ctx.getImageData(Math.max(0, x1 - sz), Math.min(y1, y2) - sz, x2 + sz * 2, Math.max(y1, y2) + sz + 4);
+
+                ctx.moveTo(x1 + sz / 2 + cr, y1 - 2);
+                ctx.lineTo(x2 + sz / 2 + cr, y2 - 2);
+                ctx.strokeStyle = '#f00'
+                ctx.stroke();
+
+                dx += 6;
+
+                tim = requestAnimationFrame(me.trace);
+            }
+            if (!isPlaying) {
+                isPlaying = true;
+                this.trace();
+            }
+        }
+
+        /**
+        * Init generals
+        */
+
+        function download() {
+            var dt = canvas.toDataURL();
+            this.href = dt; //this may not work in the future..
+        }
+        document.getElementById('download').addEventListener('click', download, false);
+
+        function getLineAngle(x1, y1, x2, y2) {
+            var dx = x2 - x1,
+                dy = y2 - y1,
+                th = Math.atan2(dy, dx);
+
+            return th * 180 / Math.PI;
+        }
+        function lineToAngle(x1, y1, length, angle) {
+
+            angle *= Math.PI / 180;
+
+            var x2 = x1 + length * Math.cos(angle),
+                y2 = y1 + length * Math.sin(angle);
+
+            return { x: x2, y: y2 };
+        }
+
+        function quantX(pts) {
+
+            var min = 99999999,
+                max = -99999999,
+                x, y, i, p = pts.length,
+                res = [];
+
+            for (i = 0; i < pts.length - 1; i += 2) {
+                if (pts[i] > max) max = pts[i];
+                if (pts[i] < min) min = pts[i];
+            }
+            max = max - min;
+
+            function _getY(x) {
+
+                var t = p,
+                    ptX1, ptX2, ptY1, ptY2, f, y;
+
+                for (; t >= 0; t -= 2) {
+                    ptX1 = pts[t];
+                    ptY1 = pts[t + 1];
+
+                    if (x >= ptX1) {
+                        //p = t + 2;
+
+                        ptX2 = pts[t + 2];
+                        ptY2 = pts[t + 3];
+
+                        f = (ptY2 - ptY1) / (ptX2 - ptX1);
+                        y = (ptX1 - x) * f;
+
+                        return ptY1 - y;
+                    }
+                }
+            }
+
+            for (i = 0; i < max; i++) {
+                res.push(i);
+                res.push(_getY(i));
+            }
+            return res;
+        }
+
+        CanvasRenderingContext2D.prototype.curve = function (pts, tension, numOfSegments) {
+
+            // use input value if provided, or use a default value	 
+            tension = (tension != undefined) ? tension : 0.5;
+            numOfSegments = numOfSegments ? numOfSegments : 16;
+
+            var _pts = [],
+                res = [], // clone array
+                x, y, // our x,y coords
+                t1x, t2x, t1y, t2y, // tension vectors
+                c1, c2, c3, c4, // cardinal points
+                st, st2, st3, st23, st32, // steps
+                t, i, l, r = 0;
+
+            // clone array so we don't change the original
+            _pts = pts.concat();
+
+            _pts.unshift(pts[1]); //copy 1. point and insert at beginning
+            _pts.unshift(pts[0]);
+            _pts.push(pts[pts.length - 2]); //copy last point and append
+            _pts.push(pts[pts.length - 1]);
+
+            l = (_pts.length - 4);
+            for (i = 2; i < l; i += 2) {
+                for (t = 0; t <= numOfSegments; t++) {
+                    // calc tension vectors
+                    t1x = (_pts[i + 2] - _pts[i - 2]) * tension;
+                    t2x = (_pts[i + 4] - _pts[i]) * tension;
+                    t1y = (_pts[i + 3] - _pts[i - 1]) * tension;
+                    t2y = (_pts[i + 5] - _pts[i + 1]) * tension;
+
+                    // pre-calc steps
+                    st = t / numOfSegments;
+                    st2 = st * st;
+                    st3 = st2 * st;
+                    st23 = st3 * 2;
+                    st32 = st2 * 3;
+
+                    // calc cardinals
+                    c1 = st23 - st32 + 1;
+                    c2 = -(st23) + st32;
+                    c3 = st3 - 2 * st2 + st;
+                    c4 = st3 - st2;
+
+                    // calc x and y cords with common control vectors
+                    x = c1 * _pts[i] + c2 * _pts[i + 2] + c3 * t1x + c4 * t2x;
+                    y = c1 * _pts[i + 1] + c2 * _pts[i + 3] + c3 * t1y + c4 * t2y;
+
+                    res[r++] = x;
+                    res[r++] = y;
+
+                } //for t
+            } //for i
+            // res = quantX(res)
+            l = res.length;
+
+            //return res to use the calculated points
+            for (i = 0; i < l; i += 2) this.lineTo(res[i], res[i + 1]);
+
+            return res;
+
+        } //func ext
+
+        /**
+        * START
+        */
+        doCanvas();
+    </script>
+</body>
+
+</html>

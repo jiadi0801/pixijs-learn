@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: #555557;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        canvas {
+            border: 1px solid #000;
+            float: left;
+            clear: both;
+            background-size: cover;
+        }
+
+        #download {
+            clear: both;
+            float: left;
+            cursor: pointer;
+            color: #ccc;
+            padding: 3px;
+        }
+
+        #download:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="500" height="300" id="canvas">Sorry, no canvas available</canvas>
+
+    <input type="button" value="New landscape" id="new" />
+    <script>
+        var canvas = document.getElementById('canvas'),
+            ctx = canvas.getContext('2d'),
+            tim,
+            isPlaying;
+
+        if (window.innerWidth > 320) {
+            canvas.width = 320;
+            canvas.height = 360;
+        }
+
+        
+
+        function doSpeed() {
+            var points = [[0, 360], [15.224,283.464], [58.578,218.578], [123.464,175.224],[200,160],[320,160]];
+            points = Array.prototype.concat.apply([], points);
+
+            var numOfSegments = points.length / 2,
+                w = 320,
+                segment = w / numOfSegments,
+                i,
+                cPoints,
+                variations = 0.21,
+                
+                x1, x2, y1, y2, dx = 0,
+                sz = 7,
+                bu,
+                me = this;
+        }
+        
+
+
+
+
+
+
+
+
+
+
+        /**
+        * Functions for demo
+        */
+        function doCanvas() {
+            // 清除动画
+            cancelAnimationFrame(tim);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            var numOfSegments = 5,
+                dlt = 0,  //no odd-number
+                w = canvas.width + dlt,
+                segment = w / numOfSegments,
+                i,
+                points = [],
+                cPoints,
+                variations = 0.21,
+
+                x1, x2, y1, y2, dx = 0,
+                sz = 7,
+                bu,
+                me = this;
+
+            points = [];
+
+            //produce some random heights across the canvas
+            for (i = 0; i < numOfSegments + 1; i++) {
+                points.push(segment * i);
+                points.push(canvas.height / 1.8 + canvas.height * variations * Math.random());
+            }
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            cPoints = ctx.curve(points); //modfied curve overrides tension
+            ctx.strokeStyle = '#ff0';
+            ctx.stroke();
+            cPoints = quantX(cPoints);
+
+            ctx.fillStyle = 'black';
+            ctx.lineWidth = 7;
+            ctx.strokeStyle = '#ff0';
+            ctx.lineCap = 'round';
+
+            this.trace = function () {
+                if (dx > 0) ctx.putImageData(bu, Math.max(0, x1 - sz), Math.min(y1, y2) - sz);
+
+                ctx.beginPath();
+                x1 = cPoints[dx] - sz / 2;
+                y1 = cPoints[dx + 1] - sz;
+
+                x2 = cPoints[dx + dlt] - sz / 2;
+                y2 = cPoints[dx + dlt + 1] - sz;
+
+                var dg = getLineAngle(x1, y1, x2, y2);
+                var l = ((((lineToAngle(x1, y2, dlt, dg).x - x1) / 2) | 0) * 2);
+
+                var cr = lineToAngle(x1, y1, sz / 2 + 2, dg - 90).x - x1;
+
+                x2 = cPoints[dx + l] - sz / 2;
+                y2 = cPoints[dx + l + 1] - sz;
+
+                bu = ctx.getImageData(Math.max(0, x1 - sz), Math.min(y1, y2) - sz, x2 + sz * 2, Math.max(y1, y2) + sz + 4);
+
+                ctx.moveTo(x1 + sz / 2 + cr, y1 - 2);
+                ctx.lineTo(x2 + sz / 2 + cr, y2 - 2);
+                ctx.strokeStyle = '#f00'
+                ctx.stroke();
+
+                dx += 6;
+
+                tim = requestAnimationFrame(me.trace);
+            }
+            if (!isPlaying) {
+                isPlaying = true;
+                this.trace();
+            }
+        }
+
+    </script>
+</body>
+
+</html>
