@@ -2,13 +2,38 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>竞速组件--重构粉笔灰粒子效果</title>
+  <title>竞速组件</title>
+  <meta name="viewport" content="width=320, user-scalable=no, minimal-ui">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-size: 10px;
+    }
+    .compwrapper {
+        width: 320px;
+        height: 360px;
+        overflow: hidden;
+    }
+    .compwrapper canvas{
+        transform-origin: 0 0;
+        transform: scale(0.4267)
+    }
+  </style>
 </head>
   <script src="../js/pixi.min.js"></script>
   <script src="../js/tween.js"></script>
   <script src="../js/sea.js"></script>
 <body>
 <div class="compwrapper"></div>
+<br>
+<div style="background: #000">
+    <img src="../images/fresh/fresh-trackBar.png"  width="162" height="57" alt="">
+    
+</div>
+
+<p>上边canvas用css3 scale缩放320/750</p>
+<p>下边img width缩放320/750</p>
 <script>
     seajs.use('../js/speed')
 </script>

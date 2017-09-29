@@ -14,30 +14,32 @@ define(function (require, exports, module) {
             "fill": "transparent"
         },
         attributes: {
+            // 此区域设置均为原始像素
             meta: {
                 num: 5, // 轨迹条个数
-                interval: 50, // 轨迹间隔
-                delta: 0,  // 轨迹错位像素
+                interval: 100, // 轨迹间隔 
+                delta: -20,  // 轨迹错位像素
+                deltaAngle: -3.5, // 轨迹错位角度
                 deltaTime: 100,  // 轨迹动画错位时间
-                paddingTop: 50,    // 内容区的边距
+                paddingTop: 250,    // 内容区的边距
+                paddingLeft: -20,
+                originWidth: 750, // psd设计文件宽度
                 tmpdata: ['长虹', '康佳', '海信', '蓝鲸', '小米']
             },
             trackBar: {
                 fillType: 'img', // img | 另外独立组件gradient
-                fill: ['uba/jfs/t10015/212/204464929/7319/16192d5c/59c8c2cbN1af8c016.png'], 
-                // motionPath: [[0, 360], [15.224,283.464], [58.578,218.578], [123.464,175.224],[200,160],[320,160]],  
-                motionPath: [[0, 34.3],[70, 14],[110, 13],[147, 0]],  // 轨迹骨架点
-                bboxWidth: 577 * (320 / 1250),   // 轨迹图片缩放像素
-                bboxHeight: 134 * (320 / 1250),
-                trackWidth: 100 * (320 / 1250) // 实际轨迹条最大处宽度，非bbox宽度
+                fill: ['uba/jfs/t9733/162/380181925/6763/4f22c80d/59cdbf13N53c2c2c3.png'], 
+                motionPath: [[0, 135],[85, 75],[170, 42],[380, 0]],  // 轨迹骨架点
+                trackWidth: 30  // 实际轨迹条最大处宽度，非bbox宽度
             },
             trackHead: {
                 fillType: 'img',
-                width: 30,
-                height: 30,
-                offset: [], // 相对trackBar顶部偏移
-                motionPath: 'bar',
-                // motionPath: [],  自定义运动轨迹， 另外独立组件
+                fill: [
+                    'uba/jfs/t8413/135/2434415281/2507/ee07e9ee/59cdbf1cNc925ffc0.png'
+                ],
+                isAutoFill: false, // 自动填充余下的数据
+                offset: [-10, 0], // 相对trackBar顶部偏移
+                alongTan: false,  // 是否沿切线方向运动
                 fretting: 'rotatecenter', // 内置若干微动效果，比如自旋转，左右晃动
             },
             trackHeadParticle: {  // 粒子随头部旋转而旋转，随头部运动而运动
@@ -54,25 +56,53 @@ define(function (require, exports, module) {
                 asyncTime: 0,  // 各粒子生成间隔， 为0时为同时生成，可产生特别的效果
             },
             rank: {
-                width: 50,
-                height: 50,
-                offset: [5, -7],
-                imgList: [], // 1-i名的排名图片
-                animation: '',  // 内置几种，配置再加要爆炸
+                offset: [50, -26],
+                fill: [
+                    'uba/jfs/t9670/221/364227472/1468/88d49f40/59cdbf2dN272b6d73.png',
+                    'uba/jfs/t8401/175/2415246228/1671/bdaf8731/59cdbf2dNadb86dc6.png',
+                    'uba/jfs/t8947/294/2461268837/1632/8ff3243e/59cdbf36Ne6fcfca7.png',
+                    'uba/jfs/t10831/157/311287799/1511/c3c640d2/59cdbf30Nff702519.png',
+                    'uba/jfs/t8464/243/2470010844/1676/47a80afb/59cdbf2eN39431101.png',
+                    'uba/jfs/t8431/149/2384178548/1687/2a672ee7/59cdbf2aN9a7a5768.png',
+                    'uba/jfs/t10453/175/387758744/1611/4dc7ac5d/59cdbf30Nf93ae20c.png',
+                    'uba/jfs/t8464/225/2382895183/1868/1f0ad0dd/59cdbf30Nbc99ddfa.png',
+                    'uba/jfs/t9898/211/362326345/1664/cd8fe86e/59cdbf2eN8b5761ad.png',
+                    'uba/jfs/t8320/184/2448852148/1784/b4e5af35/59cdbf1cN234c344a.png'
+                ]
             },
             logo: {
-                width: 140,
-                height: 100,
-                offset: [],
-                imgList: [],
-                animation: '',  
+                width: 100,
+                height: 50,
+                offset: [10, -10],
+                fill: [
+                    'uba/jfs/t9028/168/1972486316/318/b5f0a65/59ce2e8bN96a87848.png',
+                    'uba/jfs/t9028/168/1972486316/318/b5f0a65/59ce2e8bN96a87848.png',
+                    'uba/jfs/t9028/168/1972486316/318/b5f0a65/59ce2e8bN96a87848.png',
+                    'uba/jfs/t9028/168/1972486316/318/b5f0a65/59ce2e8bN96a87848.png',
+                    'uba/jfs/t9028/168/1972486316/318/b5f0a65/59ce2e8bN96a87848.png'
+                ]
             },
-            logoText: {
-                width: 360,
-                height: 100,
-                textStyle: {},
-                offset: [],
-                textList: []
+            rankText: {
+                fillType: 'text',
+                fill: [
+                    '京东生鲜1单品11月X日',
+                    '京东生鲜2单品11月X日',
+                    '京东生鲜3单品11月X日',
+                    '京东生鲜4单品11月X日',
+                    '京东生鲜5单品11月X日',
+                    '京东生鲜6单品11月X日',
+                    '京东生鲜7单品11月X日',
+                    '京东生鲜8单品11月X日',
+                    '京东生鲜9单品11月X日',
+                    '京东生鲜10单品11月X日'
+                ],
+                textStyle: {
+                    fontFamily: 'Microsoft YaHei, Arial, Helvetica, sans-serif',
+                    fontSize: 24,
+                    color: '#fff'
+                },
+                rotation: -4,
+                offset: [120, -15]
             },
             "openSelfShare": false,
             "shareSlogan": "",
